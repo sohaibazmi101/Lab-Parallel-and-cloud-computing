@@ -1,40 +1,34 @@
+#include<stdio.h>
+#include <stdbool.h>
 #include <omp.h>
-#include <stdio.h>
+#include <string.h>
 
-#define NUM_THREADS 4
-#define ARRAY_SIZE 100
+bool isPalindrome(int number);
 
-int main() {
-    int i;
-    double sum = 0.0;
-    double array[ARRAY_SIZE];
-
-    // Initialize the array
-    for (i = 0; i < ARRAY_SIZE; i++) {
-        array[i] = i * 2.0;
+int main(){
+    int number;
+    printf("Enter a number: ");
+    scanf("%d", &number);
+    if (isPalindrome(number)) {
+        printf("%d is a palindrome.\n", number);
+    } else {
+        printf("%d is not a palindrome.\n", number);
     }
-
-    // Create a parallel region
-    #pragma omp parallel num_threads(NUM_THREADS)
-    {
-        // Define a private variable for each thread
-        double local_sum = 0.0;
-
-        // Parallelize the loop using #pragma omp for
-        #pragma omp for
-        for (i = 0; i < ARRAY_SIZE; i++) {
-            local_sum += array[i];
-            printf("array %f\n", array[i]);
-        }
-
-        // Use a reduction to combine the local sums
-        #pragma omp critical
-        {
-            sum += local_sum;
-        }
-    }
-
-    printf("Sum: %f\n", sum);
-
     return 0;
+}
+bool isPalindrome(int number){
+    char str[20];
+    sprintf(str, "%d", number);
+    int len = strlen(str);
+    bool is_palindrome = true;
+    #pragma omp parallel for shared(is_palindrome)
+    for (int i = 0; i < len / 2; i++) {
+        if (str[i] != str[len - i - 1]) {
+            #pragma omp critical
+            {
+                is_palindrome = false;
+            }
+        }
+    }
+    return is_palindrome;
 }
